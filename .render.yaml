@@ -9,10 +9,10 @@ services:
       cd ..
       npm install
     startCommand: node backend/index.js
-    dockerfilePath: frontend/Dockerfile  # ✅ Specify correct path
     envVars:
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
         sync: false
     autoDeploy: true
+    rootDir: backend  # ✅ This tells Render where index.js is
