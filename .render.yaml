@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: flipx-auth
+    env: node
+    buildCommand: |
+      cd frontend
+      npm install
+      npm run build
+      cd ..
+      npm install
+    startCommand: node backend/index.js
+    envVars:
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+    autoDeploy: true
