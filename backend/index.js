@@ -143,12 +143,15 @@ const indexHtmlPath = path.join(frontendPath, "index.html");
 
 if (fs.existsSync(indexHtmlPath)) {
   app.use(express.static(frontendPath));
-  app.get("*", (req, res) => {
+
+  // Only match non-API routes (avoid catching auth, API, etc.)
+  app.get(/^\/(?!api\/|auth\/).*/, (req, res) => {
     res.sendFile(indexHtmlPath);
   });
 } else {
   console.warn("⚠️ Frontend build not found. Skipping static file serving.");
 }
+
 
 // ✅ Start server
 const PORT = process.env.PORT || 10000;
