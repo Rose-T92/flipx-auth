@@ -11,10 +11,10 @@ const fs = require("fs");
 dotenv.config();
 const app = express();
 
-// ✅ Set trust proxy for Render (enables secure cookies)
+// ✅ Trust proxy (for secure cookies on Render)
 app.set("trust proxy", 1);
 
-// ✅ Session config (must come before CORS)
+// ✅ Session middleware
 app.use(
   session({
     name: "flipx-session",
@@ -31,7 +31,7 @@ app.use(
   })
 );
 
-// ✅ CORS setup (after session)
+// ✅ CORS
 app.use(
   cors({
     origin: "https://flipx-auth-root.onrender.com",
@@ -44,7 +44,6 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// ✅ Serialize/Deserialize user
 passport.serializeUser((user, done) => {
   console.log("✅ Serializing user:", user.displayName);
   done(null, user);
@@ -55,7 +54,7 @@ passport.deserializeUser((obj, done) => {
   done(null, obj);
 });
 
-// ✅ Google OAuth Strategy
+// ✅ Google OAuth
 passport.use(
   new GoogleStrategy(
     {
@@ -70,7 +69,7 @@ passport.use(
   )
 );
 
-// ✅ Facebook OAuth Strategy
+// ✅ Facebook OAuth
 passport.use(
   new FacebookStrategy(
     {
@@ -99,7 +98,7 @@ app.get(
         return res.redirect("/auth/failure");
       }
       req.session.save(() => {
-        res.redirect("https://flipx-auth-root.onrender.com");
+        res.redirect("https://flipxdeals.com"); // ✅ MAIN SITE
       });
     });
   }
@@ -118,13 +117,13 @@ app.get(
         return res.redirect("/auth/failure");
       }
       req.session.save(() => {
-        res.redirect("https://flipx-auth-root.onrender.com");
+        res.redirect("https://flipxdeals.com"); // ✅ MAIN SITE
       });
     });
   }
 );
 
-// ✅ Shared auth routes
+// ✅ Auth State Routes
 app.get("/auth/user", (req, res) => {
   console.log("🔐 Session check — req.user:", req.user);
   res.json(req.user || null);
@@ -147,7 +146,7 @@ app.get("/auth/failure", (req, res) => {
   res.status(401).send("Login failed. Please try again.");
 });
 
-// 🔍 Cookie debug route
+// 🔎 Debug Routes
 app.get("/debug", (req, res) => {
   res.json({
     cookies: req.headers.cookie || "no cookie",
@@ -156,7 +155,6 @@ app.get("/debug", (req, res) => {
   });
 });
 
-// 🔎 Verbose session dump
 app.get("/session-debug", (req, res) => {
   res.setHeader("Content-Type", "text/plain");
   res.send(`
