@@ -10,10 +10,10 @@ const fs = require("fs");
 dotenv.config();
 const app = express();
 
-// ✅ Set trust proxy for Render (enables secure cookies)
+// ✅ Enable secure cookies behind proxy (e.g., Render)
 app.set("trust proxy", 1);
 
-// ✅ Session config (must come before CORS)
+// ✅ Session setup
 app.use(
   session({
     name: "flipx-session",
@@ -30,7 +30,7 @@ app.use(
   })
 );
 
-// ✅ CORS setup (after session)
+// ✅ CORS configuration
 app.use(
   cors({
     origin: "https://flipx-auth-root.onrender.com",
@@ -39,20 +39,15 @@ app.use(
   })
 );
 
-// ✅ Passport setup
+// ✅ Passport initialization
 app.use(passport.initialize());
 app.use(passport.session());
 
-passport.serializeUser((user, done) => {
-  console.log("✅ Serializing user:", user.displayName);
-  done(null, user);
-});
+// ✅ Passport serialization
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((obj, done) => done(null, obj));
 
-passport.deserializeUser((obj, done) => {
-  console.log("✅ Deserializing user:", obj.displayName);
-  done(null, obj);
-});
-
+// ✅ Google Strategy
 passport.use(
   new GoogleStrategy(
     {
@@ -67,12 +62,11 @@ passport.use(
   )
 );
 
-// ✅ Root route
+// ✅ API Routes
 app.get("/", (req, res) => {
   res.send("✅ FlipXDeals Auth Server Running!");
 });
 
-// ✅ Auth Routes
 app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
 app.get(
@@ -92,7 +86,6 @@ app.get(
 );
 
 app.get("/auth/user", (req, res) => {
-  console.log("🔐 Session check — req.user:", req.user);
   res.json(req.user || null);
 });
 
@@ -113,7 +106,7 @@ app.get("/auth/failure", (req, res) => {
   res.status(401).send("Login failed. Please try again.");
 });
 
-// 🔍 Cookie debug route
+// ✅ Debug Routes
 app.get("/debug", (req, res) => {
   res.json({
     cookies: req.headers.cookie || "no cookie",
@@ -122,11 +115,9 @@ app.get("/debug", (req, res) => {
   });
 });
 
-// 🔎 Verbose session dump
 app.get("/session-debug", (req, res) => {
   res.setHeader("Content-Type", "text/plain");
-  res.send(`
-===== SESSION DEBUG =====
+  res.send(`===== SESSION DEBUG =====
 COOKIES:
 ${req.headers.cookie || "None"}
 
@@ -138,16 +129,12 @@ ${JSON.stringify(req.user, null, 2)}
   `);
 });
 
-// ✅ Serve React frontend (after all API/auth routes)
+// ✅ Serve React frontend
 const frontendPath = path.join(__dirname, "../frontend/build");
-const indexHtmlPath = path.join(frontendPath, "index.html");
-
-if (fs.existsSync(indexHtmlPath)) {
+if (fs.existsSync(path.join(frontendPath, "index.html"))) {
   app.use(express.static(frontendPath));
-
-  // Catch-all route to serve React frontend (only non-auth routes)
   app.get(/^\/(?!auth\/).*/, (req, res) => {
-    res.sendFile(indexHtmlPath);
+    res.sendFile(path.join(frontendPath, "index.html"));
   });
 } else {
   console.warn("⚠️ Frontend build not found. Skipping static file serving.");
