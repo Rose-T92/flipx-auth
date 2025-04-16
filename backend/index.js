@@ -67,6 +67,11 @@ passport.use(
   )
 );
 
+// ✅ Root route
+app.get("/", (req, res) => {
+  res.send("✅ FlipXDeals Auth Server Running!");
+});
+
 // ✅ Auth Routes
 app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
@@ -133,14 +138,14 @@ ${JSON.stringify(req.user, null, 2)}
   `);
 });
 
-// ✅ Serve React frontend (after all API routes)
+// ✅ Serve React frontend (after all API/auth routes)
 const frontendPath = path.join(__dirname, "../frontend/build");
 const indexHtmlPath = path.join(frontendPath, "index.html");
 
 if (fs.existsSync(indexHtmlPath)) {
   app.use(express.static(frontendPath));
 
-  // Catch-all route that avoids matching /auth/*
+  // Catch-all route to serve React frontend (only non-auth routes)
   app.get(/^\/(?!auth\/).*/, (req, res) => {
     res.sendFile(indexHtmlPath);
   });
