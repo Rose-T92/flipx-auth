@@ -45,12 +45,12 @@ app.use(passport.session());
 
 passport.serializeUser((user, done) => {
   console.log("✅ Serializing user:", user.displayName);
-  done(null, user); // Save full profile
+  done(null, user);
 });
 
 passport.deserializeUser((obj, done) => {
   console.log("✅ Deserializing user:", obj.displayName);
-  done(null, obj); // Retrieve full profile
+  done(null, obj);
 });
 
 passport.use(
