@@ -4,6 +4,7 @@ const cors = require("cors");
 const session = require("express-session");
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const FacebookStrategy = require("passport-facebook").Strategy;
 const path = require("path");
 const fs = require("fs");
 
@@ -43,6 +44,7 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+// ✅ Serialize/Deserialize user
 passport.serializeUser((user, done) => {
   console.log("✅ Serializing user:", user.displayName);
   done(null, user);
@@ -53,6 +55,7 @@ passport.deserializeUser((obj, done) => {
   done(null, obj);
 });
 
+// ✅ Google OAuth Strategy
 passport.use(
   new GoogleStrategy(
     {
@@ -67,7 +70,23 @@ passport.use(
   )
 );
 
-// ✅ Auth Routes
+// ✅ Facebook OAuth Strategy
+passport.use(
+  new FacebookStrategy(
+    {
+      clientID: process.env.FACEBOOK_APP_ID,
+      clientSecret: process.env.FACEBOOK_APP_SECRET,
+      callbackURL: "https://flipx-auth-root.onrender.com/auth/facebook/callback",
+      profileFields: ["id", "displayName", "photos", "email"],
+    },
+    (accessToken, refreshToken, profile, done) => {
+      console.log("✅ Facebook Profile:", profile.displayName);
+      return done(null, profile);
+    }
+  )
+);
+
+// ✅ Google Routes
 app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
 app.get(
@@ -76,7 +95,7 @@ app.get(
   (req, res) => {
     req.login(req.user, (err) => {
       if (err) {
-        console.error("❌ Login error:", err);
+        console.error("❌ Google login error:", err);
         return res.redirect("/auth/failure");
       }
       req.session.save(() => {
@@ -86,6 +105,26 @@ app.get(
   }
 );
 
+// ✅ Facebook Routes
+app.get("/auth/facebook", passport.authenticate("facebook", { scope: ["email"] }));
+
+app.get(
+  "/auth/facebook/callback",
+  passport.authenticate("facebook", { failureRedirect: "/auth/failure" }),
+  (req, res) => {
+    req.login(req.user, (err) => {
+      if (err) {
+        console.error("❌ Facebook login error:", err);
+        return res.redirect("/auth/failure");
+      }
+      req.session.save(() => {
+        res.redirect("https://flipx-auth-root.onrender.com");
+      });
+    });
+  }
+);
+
+// ✅ Shared auth routes
 app.get("/auth/user", (req, res) => {
   console.log("🔐 Session check — req.user:", req.user);
   res.json(req.user || null);
@@ -133,21 +172,17 @@ ${JSON.stringify(req.user, null, 2)}
   `);
 });
 
-// ✅ Serve React frontend (after all API/auth routes)
+// ✅ Serve frontend if built
 const frontendPath = path.join(__dirname, "../frontend/build");
 const indexHtmlPath = path.join(frontendPath, "index.html");
 
 if (fs.existsSync(indexHtmlPath)) {
   app.use(express.static(frontendPath));
-
-  // Catch-all route to serve React (avoid matching /auth/*)
   app.get(/^\/(?!auth\/).*/, (req, res) => {
     res.sendFile(indexHtmlPath);
   });
 } else {
   console.warn("⚠️ Frontend build not found. Skipping static file serving.");
-
-  // ✅ Only used if frontend isn't built
   app.get("/", (req, res) => {
     res.send("✅ FlipXDeals Auth Server Running!");
   });
