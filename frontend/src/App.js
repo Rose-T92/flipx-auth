@@ -20,11 +20,11 @@ function App() {
         return res.json();
       })
       .then((data) => {
-        console.log("✅ Fetched user data:", data);
         if (data && data.displayName) {
+          console.log("✅ Logged in as:", data.displayName);
           setUser(data);
         } else {
-          console.log("ℹ️ No user session on client");
+          console.log("ℹ️ No user session found.");
         }
       })
       .catch((err) => {
@@ -33,17 +33,14 @@ function App() {
   }, []);
 
   const handleGoogleLogin = () => {
-    console.log("🟢 Google login triggered");
     window.location.href = `${BACKEND_URL}/auth/google`;
   };
 
   const handleFacebookLogin = () => {
-    console.log("🔵 Facebook login triggered");
     window.location.href = `${BACKEND_URL}/auth/facebook`;
   };
 
   const handleLogout = () => {
-    console.log("🚪 Logout triggered");
     window.location.href = `${BACKEND_URL}/auth/logout`;
   };
 
@@ -71,7 +68,6 @@ function App() {
         }}
       >
         <h2>Welcome to FlipXDeals</h2>
-
         {user ? (
           <>
             <p>
@@ -99,9 +95,7 @@ function App() {
               Continue with Google
             </button>
 
-            <div style={{ background: "yellow", padding: "10px", marginBottom: "10px" }}>
-              ⚠️ Facebook login button should appear below
-            </div>
+            <br />
 
             <button
               onClick={handleFacebookLogin}
