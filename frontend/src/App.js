@@ -7,7 +7,7 @@ function App() {
   useEffect(() => {
     console.log("🔄 Checking user session...");
 
-    fetch(`${process.env.REACT_APP_BACKEND_URL}/auth/user`, {
+    fetch(`https://flipx-auth-root.onrender.com/auth/user`, {
       method: "GET",
       credentials: "include", // ✅ sends cookies
       headers: {
@@ -32,13 +32,16 @@ function App() {
       });
   }, []);
 
-  const handleGoogleLogin = () => {
-    window.location.href = `${process.env.REACT_APP_BACKEND_URL}/auth/google`;
-  };
+const BACKEND_URL = "https://flipx-auth-root.onrender.com";
 
-  const handleLogout = () => {
-    window.location.href = `${process.env.REACT_APP_BACKEND_URL}/auth/logout`;
-  };
+const handleGoogleLogin = () => {
+  window.location.href = `${BACKEND_URL}/auth/google`;
+};
+
+const handleLogout = () => {
+  window.location.href = `${BACKEND_URL}/auth/logout`;
+};
+
 
   return (
     <div
