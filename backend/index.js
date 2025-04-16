@@ -33,7 +33,7 @@ app.use(
 // ✅ CORS setup (after session)
 app.use(
   cors({
-    origin: "https://flipx-auth.onrender.com",
+    origin: "https://flipx-auth-root.onrender.com",
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
@@ -58,7 +58,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "https://flipx-auth-server.onrender.com/auth/google/callback",
+      callbackURL: "https://flipx-auth-root.onrender.com/auth/google/callback",
     },
     (accessToken, refreshToken, profile, done) => {
       console.log("✅ Google Profile:", profile.displayName);
@@ -84,7 +84,7 @@ app.get(
         return res.redirect("/auth/failure");
       }
       req.session.save(() => {
-        res.redirect("https://flipx-auth.onrender.com");
+        res.redirect("https://flipx-auth-root.onrender.com");
       });
     });
   }
@@ -103,7 +103,7 @@ app.get("/auth/logout", (req, res) => {
         sameSite: "none",
         secure: true,
       });
-      res.redirect("https://flipx-auth.onrender.com");
+      res.redirect("https://flipx-auth-root.onrender.com");
     });
   });
 });
