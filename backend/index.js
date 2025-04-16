@@ -4,8 +4,8 @@ const cors = require("cors");
 const session = require("express-session");
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const fs = require("fs");
 const path = require("path");
+const fs = require("fs");
 
 dotenv.config();
 const app = express();
@@ -137,15 +137,17 @@ ${JSON.stringify(req.user, null, 2)}
   `);
 });
 
-// ✅ Serve frontend if build exists
+// ✅ Conditionally serve frontend if built
 const frontendPath = path.join(__dirname, "../frontend/build");
+const indexHtmlPath = path.join(frontendPath, "index.html");
 
-if (fs.existsSync(frontendPath)) {
+if (fs.existsSync(indexHtmlPath)) {
   app.use(express.static(frontendPath));
-
   app.get("*", (req, res) => {
-    res.sendFile(path.join(frontendPath, "index.html"));
+    res.sendFile(indexHtmlPath);
   });
+} else {
+  console.warn("⚠️ Frontend build not found. Skipping static file serving.");
 }
 
 // ✅ Start server
