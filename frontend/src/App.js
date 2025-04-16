@@ -3,20 +3,20 @@ import "./App.css";
 
 function App() {
   const [user, setUser] = useState(null);
+  const BACKEND_URL = "https://flipx-auth-root.onrender.com";
 
   useEffect(() => {
     console.log("🔄 Checking user session...");
 
-    fetch(`https://flipx-auth-root.onrender.com/auth/user`, {
+    fetch(`${BACKEND_URL}/auth/user`, {
       method: "GET",
-      credentials: "include", // ✅ sends cookies
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
       },
     })
       .then((res) => {
         console.log("📩 Response status:", res.status);
-        console.log("📩 Response headers:", [...res.headers]);
         return res.json();
       })
       .then((data) => {
@@ -32,16 +32,20 @@ function App() {
       });
   }, []);
 
-const BACKEND_URL = "https://flipx-auth-root.onrender.com";
+  const handleGoogleLogin = () => {
+    console.log("🟢 Google login triggered");
+    window.location.href = `${BACKEND_URL}/auth/google`;
+  };
 
-const handleGoogleLogin = () => {
-  window.location.href = `${BACKEND_URL}/auth/google`;
-};
+  const handleFacebookLogin = () => {
+    console.log("🔵 Facebook login triggered");
+    window.location.href = `${BACKEND_URL}/auth/facebook`;
+  };
 
-const handleLogout = () => {
-  window.location.href = `${BACKEND_URL}/auth/logout`;
-};
-
+  const handleLogout = () => {
+    console.log("🚪 Logout triggered");
+    window.location.href = `${BACKEND_URL}/auth/logout`;
+  };
 
   return (
     <div
@@ -67,6 +71,7 @@ const handleLogout = () => {
         }}
       >
         <h2>Welcome to FlipXDeals</h2>
+
         {user ? (
           <>
             <p>
@@ -77,6 +82,7 @@ const handleLogout = () => {
         ) : (
           <>
             <p>Sign in or sign up to continue</p>
+
             <button
               onClick={handleGoogleLogin}
               style={{
@@ -87,9 +93,29 @@ const handleLogout = () => {
                 borderRadius: "8px",
                 cursor: "pointer",
                 fontSize: "16px",
+                marginBottom: "10px",
               }}
             >
               Continue with Google
+            </button>
+
+            <div style={{ background: "yellow", padding: "10px", marginBottom: "10px" }}>
+              ⚠️ Facebook login button should appear below
+            </div>
+
+            <button
+              onClick={handleFacebookLogin}
+              style={{
+                background: "#3b5998",
+                color: "#fff",
+                padding: "0.75rem 1.5rem",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+                fontSize: "16px",
+              }}
+            >
+              Continue with Facebook
             </button>
           </>
         )}
