@@ -4,6 +4,8 @@ const cors = require("cors");
 const session = require("express-session");
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const fs = require("fs");
+const path = require("path");
 
 dotenv.config();
 const app = express();
@@ -135,17 +137,19 @@ ${JSON.stringify(req.user, null, 2)}
   `);
 });
 
+// ✅ Serve frontend if build exists
+const frontendPath = path.join(__dirname, "../frontend/build");
+
+if (fs.existsSync(frontendPath)) {
+  app.use(express.static(frontendPath));
+
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(frontendPath, "index.html"));
+  });
+}
+
 // ✅ Start server
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`✅ Auth server running on port ${PORT}`);
-});
-
-const path = require("path");
-
-// Serve frontend
-app.use(express.static(path.join(__dirname, "../frontend/build")));
-
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/build/index.html"));
 });
