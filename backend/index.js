@@ -321,37 +321,3 @@ const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`✅ Auth server running on port ${PORT}`);
 });
-
-const shopDomain = process.env.SHOPIFY_SHOP_DOMAIN;
-const shopToken = process.env.SHOPIFY_ADMIN_API_KEY;
-
-if (req.user?.email) {
-  const email = req.user.email;
-
-  fetch(`https://${shopDomain}/admin/api/2024-01/customers/search.json?query=email:${encodeURIComponent(email)}`, {
-    headers: {
-      "X-Shopify-Access-Token": shopToken,
-      "Content-Type": "application/json"
-    }
-  })
-    .then(res => res.json())
-    .then(data => {
-      const customer = data.customers?.[0];
-      if (customer) {
-        return fetch(`https://${shopDomain}/admin/api/2024-01/customers/${customer.id}.json`, {
-          method: "PUT",
-          headers: {
-            "X-Shopify-Access-Token": shopToken,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            customer: {
-              id: customer.id,
-              tags: "OAuthUser,FlipXAuto"
-            }
-          })
-        });
-      }
-    })
-    .catch(err => console.error("❌ Shopify tag update failed:", err));
-}
