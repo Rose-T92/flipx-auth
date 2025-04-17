@@ -17,6 +17,22 @@ const shopifyHeaders = {
   "X-Shopify-Access-Token": ADMIN_KEY,
   "Content-Type": "application/json"
 };
+const Knex = require("knex");
+const KnexSessionStore = require("connect-session-knex")(session);
+
+const knex = Knex({
+  client: "sqlite3",
+  connection: {
+    filename: "./sessions.sqlite"
+  },
+  useNullAsDefault: true,
+});
+
+const store = new KnexSessionStore({
+  knex,
+  tablename: "sessions"
+});
+
 
 const app = express(); // 1️⃣ App must be initialized first
 
@@ -34,6 +50,7 @@ app.use(
     secret: "flipxsecret",
     resave: false,
     saveUninitialized: false,
+    store: store, // <-- ADD THIS LINE
     proxy: true,
     cookie: {
       httpOnly: true,
@@ -43,6 +60,7 @@ app.use(
     },
   })
 );
+
 
 app.use(passport.initialize()); // 7️⃣ Init Passport
 app.use(passport.session());    // 8️⃣ Use session with Passport
@@ -68,6 +86,7 @@ passport.serializeUser((user, done) => {
   done(null, serializedUser);
 });
 
+
 passport.deserializeUser((user, done) => {
   console.log("✅ Deserializing user:", user);
   done(null, user);
@@ -87,6 +106,7 @@ passport.use(
     }
   )
 );
+
 
 // ✅ Facebook OAuth
 passport.use(
@@ -144,22 +164,22 @@ app.get("/auth/google/callback",
     };
 
     req.login(serializedUser, async (err) => {
-      if (err) return res.redirect("/auth/failure");
+      if (err) {
+        console.error("❌ Login error:", err);
+        return res.redirect("/auth/failure");
+      }
 
       const email = req.user?.email;
       if (email) {
         try {
           const searchRes = await fetch(`${shopifyBase}/customers/search.json?query=email:${encodeURIComponent(email)}`, {
-                              headers: shopifyHeaders
-                            });
-
+            headers: shopifyHeaders
+          });
 
           const { customers } = await searchRes.json();
           const customer = customers?.[0];
 
           if (customer) {
-            // ✅ Customer exists — update tags
-            console.log(`🟢 Customer exists: ${customer.email} — Updating tags...`);
             await fetch(`${shopifyBase}/customers/${customer.id}.json`, {
               method: "PUT",
               headers: shopifyHeaders,
@@ -170,10 +190,7 @@ app.get("/auth/google/callback",
                 }
               })
             });
-
           } else {
-            // ❗ Customer not found — create them
-            console.log("🆕 Creating new Shopify customer:", email);
             const createRes = await fetch(`${shopifyBase}/customers.json`, {
               method: "POST",
               headers: shopifyHeaders,
@@ -187,7 +204,6 @@ app.get("/auth/google/callback",
               })
             });
 
-
             const raw = await createRes.text();
             console.log("📥 Shopify customer create raw response:", raw);
             console.log("📦 Shopify status code:", createRes.status);
@@ -199,14 +215,13 @@ app.get("/auth/google/callback",
 
       req.session.save(() => {
         const name = encodeURIComponent(req.user.displayName || "");
-        const pic = encodeURIComponent(req.user.photos?.[0]?.value || "");
+        const pic = encodeURIComponent(req.user.photo || "");
         const fullRedirect = `${redirectTo}?name=${name}&pic=${pic}`;
         res.redirect(fullRedirect);
       });
     });
   }
 );
-
 
 // Facebook
 app.get("/auth/facebook", (req, res, next) => {
