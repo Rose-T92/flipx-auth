@@ -149,11 +149,17 @@ app.get("/auth/facebook/callback",
       return res.redirect("/auth/failure");
     }
 
-    const { displayName, photos } = req.user;
+    const displayName = req.user?.displayName || "Guest";
+    const pic = req.user?.photos?.[0]?.value || "https://cdn-icons-png.flaticon.com/512/9131/9131529.png";
+    const redirectUrl = req.session.returnTo || "https://flipxdeals.com";
+
+    console.log("✅ Facebook login success");
+    console.log("✅ Facebook login redirect to:", redirectUrl);
+    console.log("👤 displayName:", displayName);
+    console.log("🖼️ profile pic:", pic);
+
     req.session.save(() => {
-      const pic = photos?.[0]?.value || "";
-      const redirectUrl = req.session.returnTo || "https://flipxdeals.com";
-      res.send(`
+    res.send(`
         <html>
           <head>
             <meta charset="UTF-8" />
