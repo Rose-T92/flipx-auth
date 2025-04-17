@@ -10,6 +10,13 @@ const fs = require("fs");
 const cookieParser = require("cookie-parser"); // ← move here
 
 dotenv.config();
+const SHOP_DOMAIN = process.env.SHOPIFY_SHOP_DOMAIN;
+const ADMIN_KEY = process.env.SHOPIFY_ADMIN_API_KEY;
+const shopifyBase = `https://${SHOP_DOMAIN}/admin/api/2024-01`;
+const shopifyHeaders = {
+  "X-Shopify-Access-Token": ADMIN_KEY,
+  "Content-Type": "application/json"
+};
 
 const app = express(); // 1️⃣ App must be initialized first
 
@@ -142,12 +149,10 @@ app.get("/auth/google/callback",
       const email = req.user?.email;
       if (email) {
         try {
-          const searchRes = await fetch(`https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers/search.json?query=email:${encodeURIComponent(email)}`, {
-            headers: {
-              "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
-              "Content-Type": "application/json"
-            }
-          });
+          const searchRes = await fetch(`${shopifyBase}/customers/search.json?query=email:${encodeURIComponent(email)}`, {
+                              headers: shopifyHeaders
+                            });
+
 
           const { customers } = await searchRes.json();
           const customer = customers?.[0];
@@ -155,12 +160,9 @@ app.get("/auth/google/callback",
           if (customer) {
             // ✅ Customer exists — update tags
             console.log(`🟢 Customer exists: ${customer.email} — Updating tags...`);
-            await fetch(`https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers/${customer.id}.json`, {
+            await fetch(`${shopifyBase}/customers/${customer.id}.json`, {
               method: "PUT",
-              headers: {
-                "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
-                "Content-Type": "application/json"
-              },
+              headers: shopifyHeaders,
               body: JSON.stringify({
                 customer: {
                   id: customer.id,
@@ -168,15 +170,13 @@ app.get("/auth/google/callback",
                 }
               })
             });
+
           } else {
             // ❗ Customer not found — create them
             console.log("🆕 Creating new Shopify customer:", email);
-            const createRes = await fetch("https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers.json", {
+            const createRes = await fetch(`${shopifyBase}/customers.json`, {
               method: "POST",
-              headers: {
-                "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
-                "Content-Type": "application/json"
-              },
+              headers: shopifyHeaders,
               body: JSON.stringify({
                 customer: {
                   email: email,
@@ -186,6 +186,7 @@ app.get("/auth/google/callback",
                 }
               })
             });
+
 
             const raw = await createRes.text();
             console.log("📥 Shopify customer create raw response:", raw);
@@ -243,21 +244,16 @@ app.get("/auth/facebook/callback",
       const email = req.user?.email;
       if (email) {
         try {
-          const searchRes = await fetch(`https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers/search.json?query=email:${encodeURIComponent(email)}`, {
-            headers: {
-              "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
-              "Content-Type": "application/json"
-            }
+          const searchRes = await fetch(`${shopifyBase}/customers/search.json?query=email:${encodeURIComponent(email)}`, {
+            headers: shopifyHeaders
           });
+
           const { customers } = await searchRes.json();
           const customer = customers?.[0];
           if (customer) {
-            await fetch(`https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers/${customer.id}.json`, {
+            await fetch(`${shopifyBase}/customers/${customer.id}.json`, {
               method: "PUT",
-              headers: {
-                "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
-                "Content-Type": "application/json"
-              },
+              headers: shopifyHeaders,
               body: JSON.stringify({
                 customer: {
                   id: customer.id,
@@ -265,23 +261,20 @@ app.get("/auth/facebook/callback",
                 }
               })
             });
-          } else {
-            await fetch("https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers.json", {
-              method: "POST",
-              headers: {
-                "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                customer: {
-                  email: email,
-                  tags: "OAuthUser,FlipXAuto",
-                  verified_email: true,
-                  accepts_marketing: true
-                }
-              })
-            });
-          }
+            } else {
+              await fetch(`${shopifyBase}/customers.json`, {
+                method: "POST",
+                headers: shopifyHeaders,
+                body: JSON.stringify({
+                  customer: {
+                    email: email,
+                    tags: "OAuthUser,FlipXAuto",
+                    verified_email: true,
+                    accepts_marketing: true
+                  }
+                })
+              });
+            }
         } catch (e) {
           console.error("❌ Shopify tag update failed:", e);
         }
