@@ -10,8 +10,9 @@ const fs = require("fs");
 
 dotenv.config();
 const cookieParser = require("cookie-parser");
-app.use(cookieParser());
 const app = express();
+
+app.use(cookieParser());
 
 // ✅ Trust proxy (for secure cookies on Render)
 app.set("trust proxy", 1);
