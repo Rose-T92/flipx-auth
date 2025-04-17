@@ -93,6 +93,14 @@ app.get("/auth/google/init", (req, res) => {
   res.redirect("/auth/google");
 });
 
+// 🔐 Begin Google OAuth flow
+app.get("/auth/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    prompt: "select_account"
+  })
+);
+
 app.get("/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/auth/failure" }),
   (req, res) => {
