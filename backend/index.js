@@ -198,57 +198,58 @@ app.get("/auth/facebook/callback",
     console.log("🖼️ profile pic:", pic);
 
     req.login(req.user, async (err) => {
-  if (err) return res.redirect("/auth/failure");
+      if (err) return res.redirect("/auth/failure");
 
-  const email = req.user?.email;
-  if (email) {
-    try {
-      const searchRes = await fetch(`https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers/search.json?query=email:${encodeURIComponent(email)}`, {
-        headers: {
-          "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
-          "Content-Type": "application/json"
-        }
-      });
-      const { customers } = await searchRes.json();
-      const customer = customers?.[0];
-      if (customer) {
-        await fetch(`https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers/${customer.id}.json`, {
-          method: "PUT",
-          headers: {
-            "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            customer: {
-              id: customer.id,
-              tags: "OAuthUser,FlipXAuto"
+      const email = req.user?.email;
+      if (email) {
+        try {
+          const searchRes = await fetch(`https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers/search.json?query=email:${encodeURIComponent(email)}`, {
+            headers: {
+              "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
+              "Content-Type": "application/json"
             }
-          })
-        });
+          });
+          const { customers } = await searchRes.json();
+          const customer = customers?.[0];
+          if (customer) {
+            await fetch(`https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers/${customer.id}.json`, {
+              method: "PUT",
+              headers: {
+                "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                customer: {
+                  id: customer.id,
+                  tags: "OAuthUser,FlipXAuto"
+                }
+              })
+            });
+          }
+        } catch (e) {
+          console.error("❌ Shopify tag update failed:", e);
+        }
       }
-    } catch (e) {
-      console.error("❌ Shopify tag update failed:", e);
-    }
-  }
 
-  req.session.save(() => {
-    res.send(`
-      <html>
-        <head>
-          <meta charset="UTF-8" />
-          <title>Redirecting...</title>
-          <script>
-            sessionStorage.setItem("flipxRedirectAfterLogin", "${redirectUrl}");
-            window.location.href = "${redirectUrl}?name=${encodeURIComponent(displayName)}&pic=${encodeURIComponent(pic)}";
-          </script>
-        </head>
-        <body><p>Redirecting...</p></body>
-      </html>
-    `);
-  });
-});
-}
+      req.session.save(() => {
+        res.send(`
+          <html>
+            <head>
+              <meta charset="UTF-8" />
+              <title>Redirecting...</title>
+              <script>
+                sessionStorage.setItem("flipxRedirectAfterLogin", "${redirectUrl}");
+                window.location.href = "${redirectUrl}?name=${encodeURIComponent(displayName)}&pic=${encodeURIComponent(pic)}";
+              </script>
+            </head>
+            <body><p>Redirecting...</p></body>
+          </html>
+        `);
+      });
+    });
+  }
 );
+
 
 
 
