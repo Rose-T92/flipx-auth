@@ -45,9 +45,16 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 passport.serializeUser((user, done) => {
-  console.log("✅ Serializing user:", user.displayName);
-  done(null, user);
+  const serializedUser = {
+    id: user.id,
+    displayName: user.displayName,
+    email: user.emails?.[0]?.value || "",     // ✅ works for Google, may be undefined for FB
+    photo: user.photos?.[0]?.value || ""
+  };
+  console.log("✅ Serializing user:", serializedUser);
+  done(null, serializedUser);
 });
+
 
 passport.deserializeUser((obj, done) => {
   console.log("✅ Deserializing user:", obj.displayName);
@@ -116,17 +123,48 @@ app.get("/auth/google/callback",
   (req, res) => {
     const redirectTo = req.session.returnTo || "https://flipxdeals.com";
     delete req.session.returnTo;
-    req.login(req.user, (err) => {
-      if (err) return res.redirect("/auth/failure");
-      req.session.save(() => {
-        const name = encodeURIComponent(req.user.displayName || "");
-        const pic = encodeURIComponent(req.user.photos?.[0]?.value || "");
-        const fullRedirect = `${redirectTo}?name=${name}&pic=${pic}`;
-        res.redirect(fullRedirect);
+    req.login(req.user, async (err) => {
+  if (err) return res.redirect("/auth/failure");
+
+  const email = req.user?.email;
+  if (email) {
+    try {
+      const searchRes = await fetch(`https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers/search.json?query=email:${encodeURIComponent(email)}`, {
+        headers: {
+          "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
+          "Content-Type": "application/json"
+        }
       });
-    });
+      const { customers } = await searchRes.json();
+      const customer = customers?.[0];
+      if (customer) {
+        await fetch(`https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers/${customer.id}.json`, {
+          method: "PUT",
+          headers: {
+            "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            customer: {
+              id: customer.id,
+              tags: "OAuthUser,FlipXAuto"
+            }
+          })
+        });
+      }
+    } catch (e) {
+      console.error("❌ Shopify tag update failed:", e);
+    }
   }
-);
+
+  req.session.save(() => {
+    const name = encodeURIComponent(req.user.displayName || "");
+    const pic = encodeURIComponent(req.user.photos?.[0]?.value || "");
+    const fullRedirect = `${redirectTo}?name=${name}&pic=${pic}`;
+    res.redirect(fullRedirect);
+  });
+});
+
 
 
 // Facebook
@@ -159,22 +197,57 @@ app.get("/auth/facebook/callback",
     console.log("👤 displayName:", displayName);
     console.log("🖼️ profile pic:", pic);
 
-    req.session.save(() => {
-    res.send(`
-        <html>
-          <head>
-            <meta charset="UTF-8" />
-            <title>Redirecting...</title>
-            <script>
-              sessionStorage.setItem("flipxRedirectAfterLogin", "${redirectUrl}");
-              window.location.href = "${redirectUrl}?name=${encodeURIComponent(displayName)}&pic=${encodeURIComponent(pic)}";
-            </script>
-          </head>
-          <body><p>Redirecting...</p></body>
-        </html>
-      `);
-    });
+    req.login(req.user, async (err) => {
+  if (err) return res.redirect("/auth/failure");
+
+  const email = req.user?.email;
+  if (email) {
+    try {
+      const searchRes = await fetch(`https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers/search.json?query=email:${encodeURIComponent(email)}`, {
+        headers: {
+          "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
+          "Content-Type": "application/json"
+        }
+      });
+      const { customers } = await searchRes.json();
+      const customer = customers?.[0];
+      if (customer) {
+        await fetch(`https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers/${customer.id}.json`, {
+          method: "PUT",
+          headers: {
+            "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            customer: {
+              id: customer.id,
+              tags: "OAuthUser,FlipXAuto"
+            }
+          })
+        });
+      }
+    } catch (e) {
+      console.error("❌ Shopify tag update failed:", e);
+    }
   }
+
+  req.session.save(() => {
+    res.send(`
+      <html>
+        <head>
+          <meta charset="UTF-8" />
+          <title>Redirecting...</title>
+          <script>
+            sessionStorage.setItem("flipxRedirectAfterLogin", "${redirectUrl}");
+            window.location.href = "${redirectUrl}?name=${encodeURIComponent(displayName)}&pic=${encodeURIComponent(pic)}";
+          </script>
+        </head>
+        <body><p>Redirecting...</p></body>
+      </html>
+    `);
+  });
+});
+}
 );
 
 
@@ -248,3 +321,37 @@ const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`✅ Auth server running on port ${PORT}`);
 });
+
+const shopDomain = process.env.SHOPIFY_SHOP_DOMAIN;
+const shopToken = process.env.SHOPIFY_ADMIN_API_KEY;
+
+if (req.user?.email) {
+  const email = req.user.email;
+
+  fetch(`https://${shopDomain}/admin/api/2024-01/customers/search.json?query=email:${encodeURIComponent(email)}`, {
+    headers: {
+      "X-Shopify-Access-Token": shopToken,
+      "Content-Type": "application/json"
+    }
+  })
+    .then(res => res.json())
+    .then(data => {
+      const customer = data.customers?.[0];
+      if (customer) {
+        return fetch(`https://${shopDomain}/admin/api/2024-01/customers/${customer.id}.json`, {
+          method: "PUT",
+          headers: {
+            "X-Shopify-Access-Token": shopToken,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            customer: {
+              id: customer.id,
+              tags: "OAuthUser,FlipXAuto"
+            }
+          })
+        });
+      }
+    })
+    .catch(err => console.error("❌ Shopify tag update failed:", err));
+}
