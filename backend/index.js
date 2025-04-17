@@ -175,13 +175,25 @@ app.get("/auth/google/callback",
               })
             });
 
-            const createJson = await createRes.json();
-            console.log("📥 Shopify customer create response:", createJson);
+            const raw = await createRes.text();
+            console.log("📥 Shopify customer create raw response:", raw);
+            console.log("📦 Shopify status code:", createRes.status);
           }
         } catch (e) {
           console.error("❌ Shopify customer sync failed:", e);
         }
       }
+
+      req.session.save(() => {
+        const name = encodeURIComponent(req.user.displayName || "");
+        const pic = encodeURIComponent(req.user.photos?.[0]?.value || "");
+        const fullRedirect = `${redirectTo}?name=${name}&pic=${pic}`;
+        res.redirect(fullRedirect);
+      });
+    });
+  }
+);
+
 
       req.session.save(() => {
         const name = encodeURIComponent(req.user.displayName || "");
