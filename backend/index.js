@@ -34,9 +34,9 @@ app.use(
 // ✅ CORS
 app.use(
   cors({
-    origin: "https://flipx-auth-root.onrender.com",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
+  origin: ["https://flipx-auth-root.onrender.com", "https://flipxdeals.com"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true,
   })
 );
 
@@ -85,39 +85,41 @@ passport.use(
   )
 );
 
-// ✅ Google Routes
-app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+// Google
+app.get("/auth/google", (req, res, next) => {
+  req.session.returnTo = req.query.redirect || "https://flipxdeals.com";
+  passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
+});
 
-app.get(
-  "/auth/google/callback",
+app.get("/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/auth/failure" }),
   (req, res) => {
+    const redirectTo = req.session.returnTo || "https://flipxdeals.com";
+    delete req.session.returnTo;
     req.login(req.user, (err) => {
-      if (err) {
-        console.error("❌ Google login error:", err);
-        return res.redirect("/auth/failure");
-      }
+      if (err) return res.redirect("/auth/failure");
       req.session.save(() => {
-        res.redirect("https://flipxdeals.com"); // ✅ MAIN SITE
+        res.redirect(redirectTo);
       });
     });
   }
 );
 
-// ✅ Facebook Routes
-app.get("/auth/facebook", passport.authenticate("facebook", { scope: ["email"] }));
+// Facebook
+app.get("/auth/facebook", (req, res, next) => {
+  req.session.returnTo = req.query.redirect || "https://flipxdeals.com";
+  passport.authenticate("facebook", { scope: ["email"] })(req, res, next);
+});
 
-app.get(
-  "/auth/facebook/callback",
+app.get("/auth/facebook/callback",
   passport.authenticate("facebook", { failureRedirect: "/auth/failure" }),
   (req, res) => {
+    const redirectTo = req.session.returnTo || "https://flipxdeals.com";
+    delete req.session.returnTo;
     req.login(req.user, (err) => {
-      if (err) {
-        console.error("❌ Facebook login error:", err);
-        return res.redirect("/auth/failure");
-      }
+      if (err) return res.redirect("/auth/failure");
       req.session.save(() => {
-        res.redirect("https://flipxdeals.com"); // ✅ MAIN SITE
+        res.redirect(redirectTo);
       });
     });
   }
