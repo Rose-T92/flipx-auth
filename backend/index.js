@@ -54,13 +54,12 @@ passport.serializeUser((user, done) => {
   const serializedUser = {
     id: user.id,
     displayName: user.displayName,
-    email: user.emails?.[0]?.value || "",     // ✅ works for Google, may be undefined for FB
+    email: user.emails?.[0]?.value || "",
     photo: user.photos?.[0]?.value || ""
   };
   console.log("✅ Serializing user:", serializedUser);
   done(null, serializedUser);
 });
-
 
 passport.deserializeUser((user, done) => {
   console.log("✅ Deserializing user:", user);
@@ -130,7 +129,14 @@ app.get("/auth/google/callback",
     const redirectTo = req.session.returnTo || "https://flipxdeals.com";
     delete req.session.returnTo;
 
-    req.login(req.user, async (err) => {
+    const serializedUser = {
+      id: req.user.id,
+      displayName: req.user.displayName,
+      email: req.user.emails?.[0]?.value || "",
+      photo: req.user.photos?.[0]?.value || ""
+    };
+
+    req.login(serializedUser, async (err) => {
       if (err) return res.redirect("/auth/failure");
 
       const email = req.user?.email;
