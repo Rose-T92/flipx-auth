@@ -86,9 +86,11 @@ passport.use(
 );
 
 // Google
-app.get("/auth/google", (req, res, next) => {
-  req.session.returnTo = req.query.redirect || "https://flipxdeals.com";
-  passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
+// NEW secure redirect that avoids sending redirect=... directly to Google
+app.get("/auth/google/init", (req, res) => {
+  const returnTo = req.query.redirect || "https://flipxdeals.com";
+  req.session.returnTo = returnTo;
+  res.redirect("/auth/google");
 });
 
 app.get("/auth/google/callback",

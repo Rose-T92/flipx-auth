@@ -33,8 +33,9 @@ function App() {
   }, []);
 
   const handleGoogleLogin = () => {
-    window.location.href = `${BACKEND_URL}/auth/google?redirect=${encodeURIComponent(window.location.href)}`;
+    window.location.href = `${BACKEND_URL}/auth/google/init?redirect=${encodeURIComponent(window.location.href)}`;
   };
+
 
   const handleFacebookLogin = () => {
     window.location.href = `${BACKEND_URL}/auth/facebook?redirect=${encodeURIComponent(window.location.href)}`;
