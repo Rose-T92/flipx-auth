@@ -7,12 +7,13 @@ const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const FacebookStrategy = require("passport-facebook").Strategy;
 const path = require("path");
 const fs = require("fs");
-const cookieParser = require("cookie-parser");
+const cookieParser = require("cookie-parser"); // ← move here
 
 dotenv.config();
-const app = express();
 
-app.use(cookieParser());
+const app = express(); // ← move this ABOVE app.use()
+
+app.use(cookieParser()); // ✅ NOW works properly
 
 // ✅ Trust proxy (for secure cookies on Render)
 app.set("trust proxy", 1);
