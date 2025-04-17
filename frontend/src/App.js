@@ -5,6 +5,12 @@ function App() {
   const [user, setUser] = useState(null);
   const BACKEND_URL = "https://flipx-auth-root.onrender.com";
 
+  // ✅ Save current page in sessionStorage for redirect after login
+  useEffect(() => {
+    sessionStorage.setItem("flipxRedirectAfterLogin", window.location.href);
+  }, []);
+
+  // ✅ Check for existing session
   useEffect(() => {
     console.log("🔄 Checking user session...");
 
@@ -32,13 +38,15 @@ function App() {
       });
   }, []);
 
+  // ✅ Use stored redirect if available
   const handleGoogleLogin = () => {
-    window.location.href = `${BACKEND_URL}/auth/google/init?redirect=${encodeURIComponent(window.location.href)}`;
+    const redirectTo = sessionStorage.getItem("flipxRedirectAfterLogin") || window.location.href;
+    window.location.href = `${BACKEND_URL}/auth/google/init?redirect=${encodeURIComponent(redirectTo)}`;
   };
 
-
   const handleFacebookLogin = () => {
-    window.location.href = `${BACKEND_URL}/auth/facebook?redirect=${encodeURIComponent(window.location.href)}`;
+    const redirectTo = sessionStorage.getItem("flipxRedirectAfterLogin") || window.location.href;
+    window.location.href = `${BACKEND_URL}/auth/facebook?redirect=${encodeURIComponent(redirectTo)}`;
   };
 
   const handleLogout = () => {

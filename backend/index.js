@@ -113,16 +113,27 @@ app.post("/auth/google",
 app.get("/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/auth/failure" }),
   (req, res) => {
-    const redirectTo = req.session.returnTo || "https://flipxdeals.com";
-    delete req.session.returnTo;
-    req.login(req.user, (err) => {
-      if (err) return res.redirect("/auth/failure");
-      req.session.save(() => {
-        res.redirect(redirectTo);
-      });
+    req.session.save(() => {
+      res.send(`
+        <html>
+          <head>
+            <meta charset="UTF-8" />
+            <title>Redirecting...</title>
+            <script>
+              const url = sessionStorage.getItem("flipxRedirectAfterLogin") || "https://flipxdeals.com";
+              sessionStorage.removeItem("flipxRedirectAfterLogin");
+              window.location.href = url;
+            </script>
+          </head>
+          <body>
+            <p>Redirecting...</p>
+          </body>
+        </html>
+      `);
     });
   }
 );
+
 
 // Facebook
 app.get("/auth/facebook", (req, res, next) => {
@@ -133,16 +144,27 @@ app.get("/auth/facebook", (req, res, next) => {
 app.get("/auth/facebook/callback",
   passport.authenticate("facebook", { failureRedirect: "/auth/failure" }),
   (req, res) => {
-    const redirectTo = req.session.returnTo || "https://flipxdeals.com";
-    delete req.session.returnTo;
-    req.login(req.user, (err) => {
-      if (err) return res.redirect("/auth/failure");
-      req.session.save(() => {
-        res.redirect(redirectTo);
-      });
+    req.session.save(() => {
+      res.send(`
+        <html>
+          <head>
+            <meta charset="UTF-8" />
+            <title>Redirecting...</title>
+            <script>
+              const url = sessionStorage.getItem("flipxRedirectAfterLogin") || "https://flipxdeals.com";
+              sessionStorage.removeItem("flipxRedirectAfterLogin");
+              window.location.href = url;
+            </script>
+          </head>
+          <body>
+            <p>Redirecting...</p>
+          </body>
+        </html>
+      `);
     });
   }
 );
+
 
 // ✅ Auth State Routes
 app.get("/auth/user", (req, res) => {
