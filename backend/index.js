@@ -94,12 +94,14 @@ app.get("/auth/google/init", (req, res) => {
 });
 
 // 🔐 Begin Google OAuth flow
-app.get("/auth/google",
+app.get("/auth/google", (req, res, next) => {
+  const stored = req.session.returnTo || "https://flipxdeals.com";
+  req.session.returnTo = stored;
   passport.authenticate("google", {
     scope: ["profile", "email"],
     prompt: "select_account"
-  })
-);
+  })(req, res, next);
+});
 
 app.get("/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/auth/failure" }),
