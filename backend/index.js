@@ -113,30 +113,15 @@ app.post("/auth/google",
 app.get("/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/auth/failure" }),
   (req, res) => {
-    req.session.save(() => {
-      res.send(`
-        <html>
-          <head>
-            <meta charset="UTF-8" />
-            <title>Redirecting...</title>
-            <script>
-              const url = sessionStorage.getItem("flipxRedirectAfterLogin") || "https://flipxdeals.com";
-              sessionStorage.removeItem("flipxRedirectAfterLogin");
-              window.location.href = url;
-            </script>
-          </head>
-          <body>
-            <p>Redirecting...</p>
-          </body>
-        </html>
-      `);
-    });
+    const user = req.user;
+    const name = encodeURIComponent(user.displayName);
+    const pic = encodeURIComponent(user.photos?.[0]?.value || "");
+    res.redirect(`https://flipxdeals.com/login-success?name=${name}&pic=${pic}`);
   }
 );
 
-
 // Facebook
-app.get("/auth/facebook", (req, res, next) => {
+dapp.get("/auth/facebook", (req, res, next) => {
   req.session.returnTo = req.query.redirect || "https://flipxdeals.com";
   passport.authenticate("facebook", { scope: ["email"] })(req, res, next);
 });
@@ -144,27 +129,12 @@ app.get("/auth/facebook", (req, res, next) => {
 app.get("/auth/facebook/callback",
   passport.authenticate("facebook", { failureRedirect: "/auth/failure" }),
   (req, res) => {
-    req.session.save(() => {
-      res.send(`
-        <html>
-          <head>
-            <meta charset="UTF-8" />
-            <title>Redirecting...</title>
-            <script>
-              const url = sessionStorage.getItem("flipxRedirectAfterLogin") || "https://flipxdeals.com";
-              sessionStorage.removeItem("flipxRedirectAfterLogin");
-              window.location.href = url;
-            </script>
-          </head>
-          <body>
-            <p>Redirecting...</p>
-          </body>
-        </html>
-      `);
-    });
+    const user = req.user;
+    const name = encodeURIComponent(user.displayName);
+    const pic = encodeURIComponent(user.photos?.[0]?.value || "");
+    res.redirect(`https://flipxdeals.com/login-success?name=${name}&pic=${pic}`);
   }
 );
-
 
 // ✅ Auth State Routes
 app.get("/auth/user", (req, res) => {
@@ -212,6 +182,7 @@ USER:
 ${JSON.stringify(req.user, null, 2)}
   `);
 });
+
 
 // ✅ Serve frontend if built
 const frontendPath = path.join(__dirname, "../frontend/build");
