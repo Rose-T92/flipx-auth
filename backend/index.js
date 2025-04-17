@@ -195,17 +195,6 @@ app.get("/auth/google/callback",
 );
 
 
-      req.session.save(() => {
-        const name = encodeURIComponent(req.user.displayName || "");
-        const pic = encodeURIComponent(req.user.photos?.[0]?.value || "");
-        const fullRedirect = `${redirectTo}?name=${name}&pic=${pic}`;
-        res.redirect(fullRedirect);
-      });
-    });
-  }
-);
-
-
 // Facebook
 app.get("/auth/facebook", (req, res, next) => {
   req.session.returnTo = req.query.redirect || "https://flipxdeals.com";
