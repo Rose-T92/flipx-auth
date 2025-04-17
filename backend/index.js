@@ -137,12 +137,27 @@ app.get("/auth/facebook", (req, res, next) => {
 app.get("/auth/facebook/callback",
   passport.authenticate("facebook", { failureRedirect: "/auth/failure" }),
   (req, res) => {
-    const user = req.user;
-    const name = encodeURIComponent(user.displayName);
-    const pic = encodeURIComponent(user.photos?.[0]?.value || "");
-    res.redirect(`https://flipxdeals.com/login-success?name=${name}&pic=${pic}`);
+    const { displayName, photos } = req.user;
+    req.session.save(() => {
+      const pic = photos?.[0]?.value || "";
+      const redirectUrl = req.session.returnTo || "https://flipxdeals.com";
+      res.send(`
+        <html>
+          <head>
+            <meta charset="UTF-8" />
+            <title>Redirecting...</title>
+            <script>
+              sessionStorage.setItem("flipxRedirectAfterLogin", "${redirectUrl}");
+              window.location.href = "${redirectUrl}?name=${encodeURIComponent(displayName)}&pic=${encodeURIComponent(pic)}";
+            </script>
+          </head>
+          <body><p>Redirecting...</p></body>
+        </html>
+      `);
+    });
   }
 );
+
 
 // ✅ Auth State Routes
 app.get("/auth/user", (req, res) => {
