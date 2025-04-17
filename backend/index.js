@@ -77,6 +77,7 @@ passport.use(
       clientSecret: process.env.FACEBOOK_APP_SECRET,
       callbackURL: "https://flipx-auth-root.onrender.com/auth/facebook/callback",
       profileFields: ["id", "displayName", "photos", "email"],
+      enableProof: true // ✅ THIS LINE IS REQUIRED
     },
     (accessToken, refreshToken, profile, done) => {
       console.log("✅ Facebook Profile:", profile.displayName);
