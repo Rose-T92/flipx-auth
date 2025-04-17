@@ -123,51 +123,70 @@ app.get("/auth/google/callback",
   (req, res) => {
     const redirectTo = req.session.returnTo || "https://flipxdeals.com";
     delete req.session.returnTo;
+
     req.login(req.user, async (err) => {
-  if (err) return res.redirect("/auth/failure");
+      if (err) return res.redirect("/auth/failure");
 
-  const email = req.user?.email;
-  if (email) {
-    try {
-      const searchRes = await fetch(`https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers/search.json?query=email:${encodeURIComponent(email)}`, {
-        headers: {
-          "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
-          "Content-Type": "application/json"
-        }
-      });
-      const { customers } = await searchRes.json();
-      const customer = customers?.[0];
-      if (customer) {
-        await fetch(`https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers/${customer.id}.json`, {
-          method: "PUT",
-          headers: {
-            "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            customer: {
-              id: customer.id,
-              tags: "OAuthUser,FlipXAuto"
+      const email = req.user?.email;
+      if (email) {
+        try {
+          const searchRes = await fetch(`https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers/search.json?query=email:${encodeURIComponent(email)}`, {
+            headers: {
+              "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
+              "Content-Type": "application/json"
             }
-          })
-        });
-      }
-    } catch (e) {
-      console.error("❌ Shopify tag update failed:", e);
-    }
-  }
+          });
 
-  req.session.save(() => {
-    const name = encodeURIComponent(req.user.displayName || "");
-    const pic = encodeURIComponent(req.user.photos?.[0]?.value || "");
-    const fullRedirect = `${redirectTo}?name=${name}&pic=${pic}`;
-    res.redirect(fullRedirect);
-  });
-});
+          const { customers } = await searchRes.json();
+          const customer = customers?.[0];
+
+          if (customer) {
+            // ✅ Customer exists — update tags
+            await fetch(`https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers/${customer.id}.json`, {
+              method: "PUT",
+              headers: {
+                "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                customer: {
+                  id: customer.id,
+                  tags: "OAuthUser,FlipXAuto"
+                }
+              })
+            });
+          } else {
+            // ❗ Customer not found — create them
+            await fetch("https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers.json", {
+              method: "POST",
+              headers: {
+                "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                customer: {
+                  email: email,
+                  tags: "OAuthUser,FlipXAuto",
+                  verified_email: true,
+                  accepts_marketing: true
+                }
+              })
+            });
+          }
+        } catch (e) {
+          console.error("❌ Shopify customer sync failed:", e);
+        }
+      }
+
+      req.session.save(() => {
+        const name = encodeURIComponent(req.user.displayName || "");
+        const pic = encodeURIComponent(req.user.photos?.[0]?.value || "");
+        const fullRedirect = `${redirectTo}?name=${name}&pic=${pic}`;
+        res.redirect(fullRedirect);
+      });
+    });
   }
 );
-
-
 
 // Facebook
 app.get("/auth/facebook", (req, res, next) => {
@@ -227,6 +246,22 @@ app.get("/auth/facebook/callback",
                 }
               })
             });
+          } else {
+            await fetch("https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers.json", {
+              method: "POST",
+              headers: {
+                "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                customer: {
+                  email: email,
+                  tags: "OAuthUser,FlipXAuto",
+                  verified_email: true,
+                  accepts_marketing: true
+                }
+              })
+            });
           }
         } catch (e) {
           console.error("❌ Shopify tag update failed:", e);
@@ -248,12 +283,9 @@ app.get("/auth/facebook/callback",
           </html>
         `);
       });
-    });
-  }
+    }); // <- closes req.login()
+  }      // <- closes app.get()
 );
-
-
-
 
 // ✅ Auth State Routes
 app.get("/auth/user", (req, res) => {
