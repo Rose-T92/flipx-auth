@@ -7,9 +7,9 @@ const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const FacebookStrategy = require("passport-facebook").Strategy;
 const path = require("path");
 const fs = require("fs");
+const cookieParser = require("cookie-parser");
 
 dotenv.config();
-const cookieParser = require("cookie-parser");
 const app = express();
 
 app.use(cookieParser());
@@ -300,6 +300,7 @@ app.get("/auth/facebook/callback",
 // ✅ Auth State Routes
 app.get("/auth/user", (req, res) => {
   console.log("🔐 Session check — req.user:", req.user);
+  console.log("📦 Full session:", req.session);
   res.json(req.user || null);
 });
 

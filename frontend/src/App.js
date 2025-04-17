@@ -13,13 +13,11 @@ function App() {
   // ✅ Check for existing session
   useEffect(() => {
     console.log("🔄 Checking user session...");
+    console.log("🍪 Cookies:", document.cookie);
 
     fetch(`${BACKEND_URL}/auth/user`, {
       method: "GET",
       credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
     })
       .then((res) => {
         console.log("📩 Response status:", res.status);
