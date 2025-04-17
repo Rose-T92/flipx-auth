@@ -142,6 +142,7 @@ app.get("/auth/google/callback",
 
           if (customer) {
             // ✅ Customer exists — update tags
+            console.log(`🟢 Customer exists: ${customer.email} — Updating tags...`);
             await fetch(`https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers/${customer.id}.json`, {
               method: "PUT",
               headers: {
@@ -157,7 +158,8 @@ app.get("/auth/google/callback",
             });
           } else {
             // ❗ Customer not found — create them
-            await fetch("https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers.json", {
+            console.log("🆕 Creating new Shopify customer:", email);
+            const createRes = await fetch("https://sq1q6i-jm.myshopify.com/admin/api/2024-01/customers.json", {
               method: "POST",
               headers: {
                 "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_API_KEY,
@@ -172,6 +174,9 @@ app.get("/auth/google/callback",
                 }
               })
             });
+
+            const createJson = await createRes.json();
+            console.log("📥 Shopify customer create response:", createJson);
           }
         } catch (e) {
           console.error("❌ Shopify customer sync failed:", e);
@@ -187,6 +192,7 @@ app.get("/auth/google/callback",
     });
   }
 );
+
 
 // Facebook
 app.get("/auth/facebook", (req, res, next) => {
