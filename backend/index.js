@@ -133,10 +133,22 @@ app.get("/auth/facebook", (req, res, next) => {
   req.session.returnTo = req.query.redirect || "https://flipxdeals.com";
   passport.authenticate("facebook", { scope: ["email"] })(req, res, next);
 });
-
+app.post("/auth/facebook",
+  passport.authenticate("facebook", { scope: ["email"] })
+);
+app.get("/auth/facebook/init", (req, res) => {
+  const returnTo = req.query.redirect || "https://flipxdeals.com";
+  req.session.returnTo = returnTo;
+  res.redirect("/auth/facebook");
+});
 app.get("/auth/facebook/callback",
   passport.authenticate("facebook", { failureRedirect: "/auth/failure" }),
   (req, res) => {
+    if (!req.user) {
+      console.error("❌ Facebook login failed: No user returned.");
+      return res.redirect("/auth/failure");
+    }
+
     const { displayName, photos } = req.user;
     req.session.save(() => {
       const pic = photos?.[0]?.value || "";
@@ -157,6 +169,7 @@ app.get("/auth/facebook/callback",
     });
   }
 );
+
 
 
 // ✅ Auth State Routes
