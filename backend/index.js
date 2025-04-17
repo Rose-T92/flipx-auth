@@ -103,6 +103,13 @@ app.get("/auth/google", (req, res, next) => {
   })(req, res, next);
 });
 
+app.post("/auth/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    prompt: "select_account"
+  })
+);
+
 app.get("/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/auth/failure" }),
   (req, res) => {
