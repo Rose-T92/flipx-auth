@@ -11,12 +11,14 @@ const cookieParser = require("cookie-parser"); // ← move here
 
 dotenv.config();
 
-const app = express(); // ← move this ABOVE app.use()
+const app = express(); // 1️⃣ App must be initialized first
 
-app.use(cookieParser()); // ✅ NOW works properly
+app.use(cookieParser()); // 2️⃣ Cookie parser before session
 
-// ✅ Trust proxy (for secure cookies on Render)
-app.set("trust proxy", 1);
+app.use(express.json()); // 3️⃣ Parse JSON body
+app.use(express.urlencoded({ extended: true })); // 4️⃣ Parse form data
+
+app.set("trust proxy", 1); // 5️⃣ For Render or HTTPS
 
 // ✅ Session middleware
 app.use(
@@ -35,6 +37,10 @@ app.use(
   })
 );
 
+app.use(passport.initialize()); // 7️⃣ Init Passport
+app.use(passport.session());    // 8️⃣ Use session with Passport
+
+
 // ✅ CORS
 app.use(
   cors({
@@ -43,10 +49,6 @@ app.use(
   credentials: true,
   })
 );
-
-// ✅ Passport setup
-app.use(passport.initialize());
-app.use(passport.session());
 
 passport.serializeUser((user, done) => {
   const serializedUser = {
