@@ -121,7 +121,7 @@ app.get("/auth/google/callback",
 );
 
 // Facebook
-dapp.get("/auth/facebook", (req, res, next) => {
+app.get("/auth/facebook", (req, res, next) => {
   req.session.returnTo = req.query.redirect || "https://flipxdeals.com";
   passport.authenticate("facebook", { scope: ["email"] })(req, res, next);
 });
