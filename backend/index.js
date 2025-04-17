@@ -113,12 +113,20 @@ app.post("/auth/google",
 app.get("/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/auth/failure" }),
   (req, res) => {
-    const user = req.user;
-    const name = encodeURIComponent(user.displayName);
-    const pic = encodeURIComponent(user.photos?.[0]?.value || "");
-    res.redirect(`https://flipxdeals.com/login-success?name=${name}&pic=${pic}`);
+    const redirectTo = req.session.returnTo || "https://flipxdeals.com";
+    delete req.session.returnTo;
+    req.login(req.user, (err) => {
+      if (err) return res.redirect("/auth/failure");
+      req.session.save(() => {
+        const name = encodeURIComponent(req.user.displayName || "");
+        const pic = encodeURIComponent(req.user.photos?.[0]?.value || "");
+        const fullRedirect = `${redirectTo}?name=${name}&pic=${pic}`;
+        res.redirect(fullRedirect);
+      });
+    });
   }
 );
+
 
 // Facebook
 app.get("/auth/facebook", (req, res, next) => {
