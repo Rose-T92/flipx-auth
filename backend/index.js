@@ -62,9 +62,9 @@ passport.serializeUser((user, done) => {
 });
 
 
-passport.deserializeUser((obj, done) => {
-  console.log("✅ Deserializing user:", obj.displayName);
-  done(null, obj);
+passport.deserializeUser((user, done) => {
+  console.log("✅ Deserializing user:", user);
+  done(null, user);
 });
 
 // ✅ Google OAuth
