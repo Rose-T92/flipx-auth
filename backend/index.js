@@ -21,12 +21,11 @@ const Knex = require("knex");
 const KnexSessionStore = require("connect-session-knex")(session);
 
 const knex = Knex({
-  client: "sqlite3",
-  connection: {
-    filename: "./sessions.sqlite"
-  },
-  useNullAsDefault: true,
+  client: "pg",
+  connection: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false } // Required for Render
 });
+
 
 const store = new KnexSessionStore({
   knex,
