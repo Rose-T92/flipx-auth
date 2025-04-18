@@ -163,7 +163,7 @@ app.get("/auth/google/callback",
       photo: req.user.photos?.[0]?.value || ""
     };
 
-    req.login(serializedUser, async (err) => {
+    req.login(req.user, async (err) => {
       if (err) {
         console.error("❌ Login error:", err);
         return res.redirect("/auth/failure");
