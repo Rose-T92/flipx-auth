@@ -20,11 +20,18 @@ const shopifyHeaders = {
 const Knex = require("knex");
 const KnexSessionStore = require("connect-session-knex")(session);
 
-const knex = Knex({
+const knex = require("knex")({
   client: "pg",
-  connection: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false } // Required for Render
+  connection: {
+    host: process.env.PGHOST,
+    port: 5432,
+    user: process.env.PGUSER,
+    password: process.env.PGPASSWORD,
+    database: process.env.PGDATABASE,
+    ssl: { rejectUnauthorized: false }  // ✅ This line is crucial
+  },
 });
+
 
 
 const store = new KnexSessionStore({
